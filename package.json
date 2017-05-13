@@ -1,0 +1,26 @@
+{
+  "name": "politic_attitude",
+  "version": "1.0.0",
+  "description": "visualization of politic attitude according to Age in South Korea",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/heungseok/PoliticAttitude.git"
+  },
+  "keywords": [
+    "information",
+    "visualization"
+  ],
+  "author": "Heungseok Park",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/heungseok/PoliticAttitude/issues"
+  },
+  "homepage": "https://github.com/heungseok/PoliticAttitude#readme",
+  "dependencies": {
+    "express": "^4.15.2"
+  }
+}
