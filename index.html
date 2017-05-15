@@ -34,17 +34,42 @@
         </div>
 
     </nav>
-    <div id="container" style="width:100%; height:100%;">
+
+    <div id="container">
+        <!--http://stackoverflow.com/questions/42150625/how-to-style-slider-on-chart-in-d3-js-and-show-label-of-dynamic-y-value-->
+        <div class="rangeWrap">
+            <div class="playBtn">
+                <button id="autoIncrement" onclick="playInput()"> play </button>
+            </div>
+
+            <span class="rangeText"> Born in </span>
+            <span class="rangeText" id="range">1993</span>
+            <input id="slider" type="range" min="-93" max="-31" step="1" value="-93" onchange="showValue(this.value)" list="ticks"/>
+
+
+            <datalist id="ticks">
+                <option>-90</option>
+                <option>-80</option>
+                <option>-70</option>
+                <option>-60</option>
+                <option>-50</option>
+                <option>-40</option>
+            </datalist>
+
+        </div>
+        <div id="canvas">
+
+        </div>
+
 
         <script>
             // Set the dimensions of the canvas / graph
-            var margin = {top: 100, right: 20, bottom: 70, left: 50},
+            var margin = {top: 20, right: 50, bottom: 70, left: 50},
                 width = 1000 - margin.left - margin.right,
                 height = 600 - margin.top - margin.bottom;
 
             // Parse the date / time
 //            var parseDate = d3.timeParse("%b %Y");
-//            var parseDate = d3.timeParse("%d-%b-%y");
             var parseDate = d3.timeParse("%Y");
 
             // Set the ranges
@@ -56,22 +81,15 @@
 //                .curve(d3.curveCatmullRomOpen) // curved option for line
                 .curve(d3.curveBasis)
                 .x(function(d) { return x(d.date); })
-                .y(function(d) { return y(d.value); });
+                .y(function(d) { return y(d.values); });
 
             /*
                 --- d3 curve option ----
-                 d3.curveMonotoneX
-                 d3.curveCatmullRom
-                 d3.curveCardinal
-                 d3.curveBasis
-                 d3.curveStepAfter
-                 d3.curveStepBefore
-                 d3.curveStep
-                 d3.curveLinear
+                 d3.curveMonotoneX, d3.curveCatmullRom, d3.curveCardinal, d3.curveBasis, d3.curveStepAfter, d3.curveStepBefore, d3.curveStep, d3.curveLinear
              */
 
             // Adds the svg canvas
-            var svg = d3.select("#container")
+            var svg = d3.select("#canvas")
                 .append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
@@ -79,57 +97,78 @@
                 .attr("transform",
                     "translate(" + margin.left + "," + margin.top + ")");
 
-            // Get the data
-            d3.csv("/data/data.csv", function(error, data) {
+            var len_category = 0;
+            var dataNest;
 
+            // Get the data
+            d3.csv("/data/politic_view_revised.csv", function(error, data) {
                 data.forEach(function(d) {
+
                     d.date = parseDate(d.date);
-                    d.value = +d.value;
+                    d.values = +d.values;
                 });
 
                 // Scale the range of the data
                 x.domain(d3.extent(data, function(d) { return d.date; }));
-                y.domain([0, d3.max(data, function(d) { return d.value; })]);
-
-                // Nest the entries by symbol
-                var dataNest = d3.nest()
-                    .key(function(d) {return d.yob;})
-                    .entries(data);
-
-                console.log(dataNest);
-
-
-                // set the gradient
-                svg.append("linearGradient")
-                    .attr("id", "line-gradient")
-                    .attr("gradientUnits", "userSpaceOnUse")
-                    .attr("x1", 0).attr("y1", y(0))
-                    .attr("x2", 0).attr("y2", y(600))
-                    .selectAll("stop")
-                    .data([
-                        {offset: "0%", color: "steelblue"},
-//                        {offset: "40%", color: "steelblue"},
-                        {offset: "50%", color: "gray"},
-//                        {offset: "60%", color: "red"},
-                        {offset: "100%", color: "red"}
-                    ])
-                    .enter().append("stop")
-                    .attr("offset", function(d){ return d.offset; })
-                    .attr("stop-color", function(d) { return d.color;})
-
-                // add the valueline path.
-                svg.append("path")
-                    .data([data])
-                    .attr("class", "line")
-                    .attr("d", valueline);
-
+                y.domain([2.0, d3.max(data, function(d) { return d.values; })]);
                 // set the colour scale
                 var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+
+                // Nest the entries by symbol
+                dataNest = d3.nest()
+                    .key(function(d) {return d.yob;})
+                    .entries(data);
+                // init length of category
+                len_category = dataNest.length;
+
+                legendSpace = width/dataNest.length; // spacing for the legend
+
+
+                // Loop through each symbol / key
+                dataNest.forEach(function(d,i) {
+
+                    svg.append("path")
+                        .attr("class", "line")
+                        .style("stroke", function() { // Add the colours dynamically
+                            return d.color = color(d.key); })
+                        .attr("id", 'tag'+d.key.replace(/\s+/g, '')) // assign an ID
+                        .attr("d", valueline(d.values));
+
+                    // Add the Legend by the right of the graph (그래프 오른쪽에 legend, mouseover event)
+                    svg.append("text")
+                        .attr("transform", function() {
+                            var len = d.values.length;
+                            return "translate(" + x(d.values[len-1].date) + ", " + y(d.values[len-1].values) + ")";
+                        })
+//                        .attr("x", width + 5)  // space legend
+//                        .attr("y", y(d.values[d.values.length-1].values))
+                        .attr("id", 'text_id'+d.key.replace(/\s+/g, ''))
+                        .attr("class", "legend")    // style the legend
+                        // mouse 이벤트 len_category는 yob(year of birth) 카테고리의 길이를 나타냄.
+                        .on("mouseover", function(){
+                            for(j=0; j < len_category; j++){
+                                if(i !== j){
+                                    d3.select("#tag"+dataNest[j].key.replace(/\s+/g, '')).style("opacity", 0.1);
+                                    d3.select("#text_id"+dataNest[j].key.replace(/\s+/g, '')).style("opacity", 0.2);
+                                }
+                            }
+                        })
+                        .on("mouseout", function(){
+                            for(j=0; j < len_category; j++){
+                                d3.select("#tag"+dataNest[j].key.replace(/\s+/g, '')).style("opacity", 1);
+                                d3.select("#text_id"+dataNest[j].key.replace(/\s+/g, '')).style("opacity",1);
+                            }
+                        })
+                        .text(d.key);
+
+                });
+
 
                 // Add the X Axis
                 svg.append("g")
                     .attr("class", "axis")
-                    .attr("transform", "translate(0," + height/2 + ")")
+                    .attr("transform", "translate(0," + height + ")")
                     .call(d3.axisBottom(x));
 
                 // Add the Y Axis
@@ -138,8 +177,47 @@
                     .call(d3.axisLeft(y));
 
 
-
             });
+
+
+            function showValue(newValue){
+
+                var value = 19 + String(-1*Number(newValue));
+                document.getElementById("range").innerHTML = value;
+                var active_index = 0;
+                for(var i=0; i<dataNest.length; i++){
+                    if(value !== dataNest[i].key){
+                        d3.select("#tag"+dataNest[i].key.replace(/\s+/g, '')).style("opacity", 0.1);
+                        d3.select("#text_id"+dataNest[i].key.replace(/\s+/g, '')).style("opacity", 0.2);
+                    }else{
+                        active_index = i
+                    }
+                }
+//                console.log(dataNest[active_index]);
+                d3.select("#tag"+dataNest[active_index].key.replace(/\s+/g, '')).style("opacity", 1);
+                d3.select("#text_id"+dataNest[active_index].key.replace(/\s+/g, '')).style("opacity", 1);
+            }
+
+            var index;
+            function playInput() {
+                // -93 to -31
+                index = -93;
+                delayedLoop();
+            }
+            function delayedLoop()
+            {
+                // (3) do action
+                $("#slider").val(index);
+                $("#slider").change();
+
+                // (4) if the end of the array has been reached, stop
+                if(++index == -31)
+                    return;
+
+                // (5) recursively call the delayed loop function with a delay
+                window.setTimeout(delayedLoop, 500);
+            }
+
 
         </script>
 
