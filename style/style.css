@@ -42,8 +42,12 @@ nav {
     text-anchor: middle;
 }
 
-
-
+#sliderdiv{
+    width: 500px;
+    height: 50px;
+    margin-left: 5vw;
+    margin-bottom: 0;
+}
 
 
 
