@@ -62,6 +62,11 @@ nav {
 #slider{
     margin-top: 20px;
     margin-bottom: 20px;
+    z-index: 10000;
+}
+
+#canvas{
+    margin-top: 50px;
 }
 
 /*

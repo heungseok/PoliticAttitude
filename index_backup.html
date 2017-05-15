@@ -39,7 +39,7 @@
         <!--http://stackoverflow.com/questions/42150625/how-to-style-slider-on-chart-in-d3-js-and-show-label-of-dynamic-y-value-->
         <div class="rangeWrap">
             <div class="playBtn">
-                <!--<button id="autoIncrement" onclick="playInput()"> play </button>-->
+                <button id="autoIncrement" onclick="playInput()"> play </button>
             </div>
 
             <span class="rangeText"> Born in </span>
@@ -64,7 +64,7 @@
 
         <script>
             // Set the dimensions of the canvas / graph
-            var margin = {top: 70, right: 50, bottom: 70, left: 50},
+            var margin = {top: 20, right: 50, bottom: 70, left: 50},
                 width = 1000 - margin.left - margin.right,
                 height = 600 - margin.top - margin.bottom;
 
@@ -198,42 +198,25 @@
                 d3.select("#text_id"+dataNest[active_index].key.replace(/\s+/g, '')).style("opacity", 1);
             }
 
+            var index;
             function playInput() {
                 // -93 to -31
-                for(var i= -93; i< -31; i++){
-
-                    setTimeout(function () {
-                        console.log(i);
-                        $("#slider").val(i);
-                        $("#slider").change();
-
-                    }, 500);
-
-
-                }
-
-
-
+                index = -93;
+                delayedLoop();
             }
-/*
+            function delayedLoop()
+            {
+                // (3) do action
+                $("#slider").val(index);
+                $("#slider").change();
 
-            function playInput() {
+                // (4) if the end of the array has been reached, stop
+                if(++index == -31)
+                    return;
 
-                for(var i=0; i<dataNest.length; i++){
-
-                    var active_key = dataNest[i].key;
-
-                    setTimeout(function () {
-                        d3.select("#tag"+active_key.replace(/\s+/g, '')).style("opacity", 0.1);
-                        d3.select("#text_id"+active_key.replace(/\s+/g, '')).style("opacity", 0.2);
-
-                    }, 500)
-
-                }
+                // (5) recursively call the delayed loop function with a delay
+                window.setTimeout(delayedLoop, 500);
             }
-
-*/
-
 
 
         </script>
