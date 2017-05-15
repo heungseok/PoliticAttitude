@@ -11,30 +11,20 @@ body{
 nav {
     z-index: 1000000;
 }
-#container canvas{
+#container{
     font: 12px Arial;
-    color: white;
-    stroke: steelblue;
     stroke-width: 2;
-    fill: none;
-
-    position: relative;
+    position: absolute;
+    top: 10vh;
     z-index: 1;
 }
 
 
-path.line{
-    stroke: steelblue;
-    stroke-width: 2;
+.line {
     fill: none;
-    color:white;
-}
-
-.line.above {
-    stroke: #f00;
-}
-.line.below {
-    stroke: #000;
+    /*There's the fairly standard fill of none and a stroke width of 2 pixels, but the stroke: url(#line-gradient); is something different.*/
+    stroke: url(#line-gradient);
+    stroke-width: 3px;
 }
 
 

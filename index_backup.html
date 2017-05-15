@@ -34,18 +34,25 @@
         </div>
 
     </nav>
-    <div id="container" style="width:100%; height:100%;">
+
+    <div id="container">
+        <!--http://stackoverflow.com/questions/42150625/how-to-style-slider-on-chart-in-d3-js-and-show-label-of-dynamic-y-value-->
+        <div id="sliderdiv"><input id="slider" type="range" min="1" max="20" step="1" value="10"/></div>
+        <div id="canvas" style="">
+
+        </div>
+
 
         <script>
             // Set the dimensions of the canvas / graph
-            var margin = {top: 100, right: 20, bottom: 70, left: 50},
+            var margin = {top: 100, right: 50, bottom: 70, left: 50},
                 width = 1000 - margin.left - margin.right,
                 height = 600 - margin.top - margin.bottom;
 
             // Parse the date / time
 //            var parseDate = d3.timeParse("%b %Y");
-//            var parseDate = d3.timeParse("%d-%b-%y");
             var parseDate = d3.timeParse("%Y");
+            var bisectDate = d3.bisector(function(d) { return d.date; }).left;
 
             // Set the ranges
             var x = d3.scaleTime().range([0, width]);
@@ -56,7 +63,7 @@
 //                .curve(d3.curveCatmullRomOpen) // curved option for line
                 .curve(d3.curveBasis)
                 .x(function(d) { return x(d.date); })
-                .y(function(d) { return y(d.value); });
+                .y(function(d) { return y(d.values); });
 
             /*
                 --- d3 curve option ----
@@ -70,8 +77,10 @@
                  d3.curveLinear
              */
 
+
+
             // Adds the svg canvas
-            var svg = d3.select("#container")
+            var svg = d3.select("#canvas")
                 .append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
@@ -79,64 +88,116 @@
                 .attr("transform",
                     "translate(" + margin.left + "," + margin.top + ")");
 
-            // Get the data
-            d3.csv("/data/data.csv", function(error, data) {
+            var focus = svg.append("g").style("display", "none");
 
+            var len_category = 0;
+
+
+//            var bars = svg.selectAll(".bars")
+//                .
+
+            // Get the data
+//            d3.csv("/data/stocks.csv", function(error, data) {
+            d3.csv("/data/politic_view.csv", function(error, data) {
                 data.forEach(function(d) {
+//                    d.yob = d.yob;
                     d.date = parseDate(d.date);
-                    d.value = +d.value;
+                    d.values = +d.values;
                 });
 
                 // Scale the range of the data
                 x.domain(d3.extent(data, function(d) { return d.date; }));
-                y.domain([0, d3.max(data, function(d) { return d.value; })]);
+                y.domain([0, d3.max(data, function(d) { return d.values; })]);
+                // set the colour scale
+                var color = d3.scaleOrdinal(d3.schemeCategory10);
+
 
                 // Nest the entries by symbol
                 var dataNest = d3.nest()
                     .key(function(d) {return d.yob;})
                     .entries(data);
+                len_category = dataNest.length;
 
-                console.log(dataNest);
 
 
-                // set the gradient
-                svg.append("linearGradient")
-                    .attr("id", "line-gradient")
-                    .attr("gradientUnits", "userSpaceOnUse")
-                    .attr("x1", 0).attr("y1", y(0))
-                    .attr("x2", 0).attr("y2", y(600))
-                    .selectAll("stop")
-                    .data([
-                        {offset: "0%", color: "steelblue"},
-//                        {offset: "40%", color: "steelblue"},
-                        {offset: "50%", color: "gray"},
-//                        {offset: "60%", color: "red"},
-                        {offset: "100%", color: "red"}
-                    ])
-                    .enter().append("stop")
-                    .attr("offset", function(d){ return d.offset; })
-                    .attr("stop-color", function(d) { return d.color;})
+                legendSpace = width/dataNest.length; // spacing for the legend
 
-                // add the valueline path.
-                svg.append("path")
-                    .data([data])
-                    .attr("class", "line")
-                    .attr("d", valueline);
 
-                // set the colour scale
-                var color = d3.scaleOrdinal(d3.schemeCategory10);
+                // Loop through each symbol / key
+                dataNest.forEach(function(d,i) {
+
+                    svg.append("path")
+                        .attr("class", "line")
+                        .style("stroke", function() { // Add the colours dynamically
+                            return d.color = color(d.key); })
+                        .attr("id", 'tag'+d.key.replace(/\s+/g, '')) // assign an ID
+                        .attr("d", valueline(d.values));
+
+                    // Add the Legend by the right of the graph (그래프 오른쪽에 legend, mouseover event)
+                    svg.append("text")
+                        .attr("transform", function() {
+                            var len = d.values.length;
+                            return "translate(" + x(d.values[len-1].date) + ", " + y(d.values[len-1].values) + ")";
+                        })
+//                        .attr("x", width + 5)  // space legend
+//                        .attr("y", y(d.values[d.values.length-1].values))
+                        .attr("id", 'text_id'+d.key.replace(/\s+/g, ''))
+                        .attr("class", "legend")    // style the legend
+                        // mouse 이벤트 len_category는 yob(year of birth) 카테고리의 길이를 나타냄.
+                        .on("mouseover", function(){
+                            for(j=0; j < len_category; j++){
+                                if(i !== j){
+                                    d3.select("#tag"+dataNest[j].key.replace(/\s+/g, '')).style("opacity", 0.1);
+                                    d3.select("#text_id"+dataNest[j].key.replace(/\s+/g, '')).style("opacity", 0.2);
+                                }
+                            }
+                        })
+                        .on("mouseout", function(){
+                            for(j=0; j < len_category; j++){
+                                d3.select("#tag"+dataNest[j].key.replace(/\s+/g, '')).style("opacity", 1);
+                                d3.select("#text_id"+dataNest[j].key.replace(/\s+/g, '')).style("opacity",1);
+                            }
+                        })
+                        .text(d.key);
+
+                    /*
+                    // Add the Legend by the below of graph (그래프 아래에 legend)
+                    svg.append("text")
+                        .attr("x", (legendSpace/2)+i*legendSpace)  // space legend
+                        .attr("y", height + (margin.bottom/2)+ 5)
+                        .attr("class", "legend")    // style the legend
+                        .style("fill", function() { // Add the colours dynamically
+                            return d.color = color(d.key); })
+                        .on("click", function(){
+                            // Determine if current line is visible
+                            var active   = d.active ? false : true,
+                                newOpacity = active ? 0 : 1;
+                            // Hide or show the elements based on the ID
+                        d3.select("#tag"+d.key.replace(/\s+/g, ''))
+                            .transition().duration(100)
+                            .style("opacity", newOpacity);
+                        // Update whether or not the elements are active
+                            d.active = active;
+                        })
+                        .text(d.key);
+
+                    */
+
+
+
+                });
+
 
                 // Add the X Axis
                 svg.append("g")
                     .attr("class", "axis")
-                    .attr("transform", "translate(0," + height/2 + ")")
+                    .attr("transform", "translate(0," + height + ")")
                     .call(d3.axisBottom(x));
 
                 // Add the Y Axis
                 svg.append("g")
                     .attr("class", "axis")
                     .call(d3.axisLeft(y));
-
 
 
             });
