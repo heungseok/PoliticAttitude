@@ -37,20 +37,64 @@ nav {
 }
 
 .legend {
-    font-size: 16px;
+    font-size: 10px;
     font-weight: bold;
     text-anchor: middle;
 }
 
-#sliderdiv{
+.playBtn{
+    margin-bottom: 10px;
+}
+
+.rangeWrap{
     width: 500px;
     height: 50px;
     margin-left: 5vw;
     margin-bottom: 0;
 }
 
+.rangeText{
+    margin-bottom: 10px;
+    margin-top: 5px;
+    font-size: 16px;
+}
 
+#slider{
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
 
+/*
+.rangeWrap input {
+    width: 100%;
+    margin: 0;
+}
+.rangeWrap .ticks {
+    display: flex;
+    justify-content: space-between;
+    height: 6px;
+    margin: -1.5em 5px 0 6px;
+    font: 10px Arial;
+    counter-reset: count -1;
+}
+.rangeWrap .ticks > div {
+    height: 100%;
+    width: 1px;
+    background: silver;
+    counter-increment: count 1;
+}
+.rangeWrap .ticks > div:nth-child(5n - 4) {
+    height: 200%;
+}
+.rangeWrap .ticks > div:nth-child(5n - 4)::before {
+    display: block;
+    content: counter(count,decimal);
+    transform: translate(-50%, 100%);
+    text-align: center;
+    width: 16px;
+}
+
+*/
 
 
 

@@ -37,30 +37,40 @@
 
     <div id="container">
         <!--http://stackoverflow.com/questions/42150625/how-to-style-slider-on-chart-in-d3-js-and-show-label-of-dynamic-y-value-->
-        <div id="sliderdiv">
-            <span id="range">1993</span>
-            <input id="slider" type="range" min="-93" max="-31" step="1" value="-93" onchange="showValue(this.value)"/>
-            <script>
-                function showValue(newValue){
-                    document.getElementById("range").innerHTML = "19" + (-1*Number(newValue));
-                }
-            </script>
+        <div class="rangeWrap">
+            <div class="playBtn">
+                <!--<button id="autoIncrement" onclick="playInput()"> play </button>-->
+            </div>
+
+            <span class="rangeText"> Born in </span>
+            <span class="rangeText" id="range">1993</span>
+            <input id="slider" type="range" min="-93" max="-31" step="1" value="-93" onchange="showValue(this.value)" list="ticks"/>
+
+
+            <datalist id="ticks">
+                <option>-90</option>
+                <option>-80</option>
+                <option>-70</option>
+                <option>-60</option>
+                <option>-50</option>
+                <option>-40</option>
+            </datalist>
+
         </div>
-        <div id="canvas" style="">
+        <div id="canvas">
 
         </div>
 
 
         <script>
             // Set the dimensions of the canvas / graph
-            var margin = {top: 20, right: 50, bottom: 70, left: 50},
+            var margin = {top: 70, right: 50, bottom: 70, left: 50},
                 width = 1000 - margin.left - margin.right,
                 height = 600 - margin.top - margin.bottom;
 
             // Parse the date / time
 //            var parseDate = d3.timeParse("%b %Y");
             var parseDate = d3.timeParse("%Y");
-            var bisectDate = d3.bisector(function(d) { return d.date; }).left;
 
             // Set the ranges
             var x = d3.scaleTime().range([0, width]);
@@ -88,25 +98,25 @@
                     "translate(" + margin.left + "," + margin.top + ")");
 
             var len_category = 0;
+            var dataNest;
 
             // Get the data
-//            d3.csv("/data/stocks.csv", function(error, data) {
             d3.csv("/data/politic_view_revised.csv", function(error, data) {
                 data.forEach(function(d) {
-//                    d.yob = d.yob;
+
                     d.date = parseDate(d.date);
                     d.values = +d.values;
                 });
 
                 // Scale the range of the data
                 x.domain(d3.extent(data, function(d) { return d.date; }));
-                y.domain([0, d3.max(data, function(d) { return d.values; })]);
+                y.domain([2.0, d3.max(data, function(d) { return d.values; })]);
                 // set the colour scale
                 var color = d3.scaleOrdinal(d3.schemeCategory10);
 
 
                 // Nest the entries by symbol
-                var dataNest = d3.nest()
+                dataNest = d3.nest()
                     .key(function(d) {return d.yob;})
                     .entries(data);
                 // init length of category
@@ -152,31 +162,6 @@
                         })
                         .text(d.key);
 
-                    /*
-                    // Add the Legend by the below of graph (그래프 아래에 legend)
-                    svg.append("text")
-                        .attr("x", (legendSpace/2)+i*legendSpace)  // space legend
-                        .attr("y", height + (margin.bottom/2)+ 5)
-                        .attr("class", "legend")    // style the legend
-                        .style("fill", function() { // Add the colours dynamically
-                            return d.color = color(d.key); })
-                        .on("click", function(){
-                            // Determine if current line is visible
-                            var active   = d.active ? false : true,
-                                newOpacity = active ? 0 : 1;
-                            // Hide or show the elements based on the ID
-                        d3.select("#tag"+d.key.replace(/\s+/g, ''))
-                            .transition().duration(100)
-                            .style("opacity", newOpacity);
-                        // Update whether or not the elements are active
-                            d.active = active;
-                        })
-                        .text(d.key);
-
-                    */
-
-
-
                 });
 
 
@@ -193,66 +178,61 @@
 
 
             });
+
+
+            function showValue(newValue){
+
+                var value = 19 + String(-1*Number(newValue));
+                document.getElementById("range").innerHTML = value;
+                var active_index = 0;
+                for(var i=0; i<dataNest.length; i++){
+                    if(value !== dataNest[i].key){
+                        d3.select("#tag"+dataNest[i].key.replace(/\s+/g, '')).style("opacity", 0.1);
+                        d3.select("#text_id"+dataNest[i].key.replace(/\s+/g, '')).style("opacity", 0.2);
+                    }else{
+                        active_index = i
+                    }
+                }
+//                console.log(dataNest[active_index]);
+                d3.select("#tag"+dataNest[active_index].key.replace(/\s+/g, '')).style("opacity", 1);
+                d3.select("#text_id"+dataNest[active_index].key.replace(/\s+/g, '')).style("opacity", 1);
+            }
+
+            function playInput() {
+                // -93 to -31
+                for(var i= -93; i< -31; i++){
+
+                    setTimeout(function () {
+                        console.log(i);
+                        $("#slider").val(i);
+                        $("#slider").change();
+
+                    }, 500);
+
+
+                }
+
+
+
+            }
 /*
-            var slider_width = 500 - margin.left - margin.right;
-            var slider_height = 100;
-            var slider_x = d3.scaleLinear()
-                .domain([93, 31])
-                .range([0, slider_width- 100])
-                .clamp(true);
 
+            function playInput() {
 
+                for(var i=0; i<dataNest.length; i++){
 
-            // slider
-            var slider = d3.select("#sliderdiv")
-                .append("svg")
-                .attr("width", slider_width)
-                .attr("height", slider_height)
-                .append("g")
-                .attr("class", "slider")
-                .attr("transform", "translate(" + margin.left + "," + margin.right + ")");
+                    var active_key = dataNest[i].key;
 
-            slider.append("line")
-                .attr("class", "track")
-                .attr("x1", slider_x.range()[0])
-                .attr("x2", slider_x.range()[1])
-                .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
-                .attr("class", "track-inset")
-                .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
-                .attr("class", "track-overlay")
-                .call(d3.drag()
-                    .on("start.interrupt", function() { slider.interrupt(); })
-                    .on("start drag", function(d) {
-                        console.log(this.value);
-                        hue(slider_x.invert(d3.event.x));
-                    }));
+                    setTimeout(function () {
+                        d3.select("#tag"+active_key.replace(/\s+/g, '')).style("opacity", 0.1);
+                        d3.select("#text_id"+active_key.replace(/\s+/g, '')).style("opacity", 0.2);
 
-            slider.insert("g", ".track-overlay")
-                .attr("class", "ticks")
-                .attr("transform", "translate(0," + 18 + ")")
-                .selectAll("text")
-                .data(slider_x.ticks(10))
-                .enter().append("text")
-                .attr("x", slider_x)
-                .attr("text-anchor", "middle")
-                .text(function(d) { return "’" + d ; });
+                    }, 500)
 
-            var handle = slider.insert("circle", ".track-overlay")
-                .attr("class", "handle")
-                .attr("r", 9);
+                }
+            }
 
-            slider.transition() // Gratuitous intro!
-                .duration(750)
-                .tween("hue", function() {
-                    var i = d3.interpolate(0, 70);
-                    return function(t) { hue(i(t)); };
-                });
-
-            function hue(h) {
-                handle.attr("cx", slider_x(h));
-                svg.style("background-color", d3.hsl(h, 0.8, 0.8));
-            }*/
-
+*/
 
 
 
