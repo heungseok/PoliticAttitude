@@ -15,11 +15,13 @@
 
 <body>
     <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://d3js.org/d3-color.v1.min.js"></script>
+    <script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
 
     <nav class="navbar navbar-inverse navbar-fixed-top" style="position: absolute; left:0; top:0">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand" href="#">PoliticAttitude<small> - Visualization of trend of Political Attitude according to Age in South Korea</small></a>
+                <a class="navbar-brand" href="#">PoliticView<small> - Trends of political views by birth year in South Korea 2003 - 2016</small></a>
             </div>
 
 
@@ -43,28 +45,34 @@
             </div>
 
             <span class="rangeText"> Born in </span>
-            <span class="rangeText" id="range">1993</span>
-            <input id="slider" type="range" min="-93" max="-31" step="1" value="-93" onchange="showValue(this.value)" list="ticks"/>
+            <span class="rangeText" id="range">1931</span>
+            <input id="slider" type="range" min="31" max="93" step="1" value="31" onchange="showValue(this.value)" list="ticks"/>
 
 
             <datalist id="ticks">
-                <option>-90</option>
-                <option>-80</option>
-                <option>-70</option>
-                <option>-60</option>
-                <option>-50</option>
-                <option>-40</option>
+                <option>40</option>
+                <option>50</option>
+                <option>60</option>
+                <option>70</option>
+                <option>80</option>
+                <option>90</option>
             </datalist>
 
         </div>
         <div id="canvas">
 
         </div>
+        <div class="description">
+            <span class="text data-source">Data source: KGSS (Korean General Social Survey) 2003 - 2016</span>
+            <span class="text copyright">© 2017 Wonjae Lee and Heungseok Park, KAIST </span>
+            <span class="text data-source"><br>(The data was neither collected nor analyzed in 2015)</span>
+
+        </div>
 
 
         <script>
             // Set the dimensions of the canvas / graph
-            var margin = {top: 20, right: 50, bottom: 70, left: 50},
+            var margin = {top: 20, right: 50, bottom: 70, left: 100},
                 width = 1000 - margin.left - margin.right,
                 height = 600 - margin.top - margin.bottom;
 
@@ -79,7 +87,10 @@
             // Define the line
             var valueline = d3.line()
 //                .curve(d3.curveCatmullRomOpen) // curved option for line
-                .curve(d3.curveBasis)
+//                .curve(d3.curveBasis)
+//                .curve(d3.curveMonotoneX)
+//                .curve(d3.curveCatmullRom)
+                .curve(d3.curveCardinal)
                 .x(function(d) { return x(d.date); })
                 .y(function(d) { return y(d.values); });
 
@@ -101,7 +112,7 @@
             var dataNest;
 
             // Get the data
-            d3.csv("/data/politic_view_revised.csv", function(error, data) {
+            d3.csv("./data/politic_view_revised.csv", function(error, data) {
                 data.forEach(function(d) {
 
                     d.date = parseDate(d.date);
@@ -112,7 +123,15 @@
                 x.domain(d3.extent(data, function(d) { return d.date; }));
                 y.domain([2.0, d3.max(data, function(d) { return d.values; })]);
                 // set the colour scale
-                var color = d3.scaleOrdinal(d3.schemeCategory10);
+                // var color = d3.scaleOrdinal(d3.schemeCategory10);
+                var color = d3.scaleLinear()
+                    .domain([1931, 1993])           // 1931년부터 1993년 까지의 domain을
+                    .range(["#B71C1C", "#0D47A1"])         // 아래 컬러 range 로 변환
+                    .interpolate(d3.interpolateHcl);
+//                console.log(color(1931))
+//                console.log(color(1993))
+
+
 
 
                 // Nest the entries by symbol
@@ -131,7 +150,9 @@
                     svg.append("path")
                         .attr("class", "line")
                         .style("stroke", function() { // Add the colours dynamically
-                            return d.color = color(d.key); })
+//                            console.log(Number(d.key))
+                            return d.color = color(Number(d.key));
+                             })
                         .attr("id", 'tag'+d.key.replace(/\s+/g, '')) // assign an ID
                         .attr("d", valueline(d.values));
 
@@ -171,10 +192,77 @@
                     .attr("transform", "translate(0," + height + ")")
                     .call(d3.axisBottom(x));
 
+                // Add text label for the x axis
+                svg.append("text")
+                    .attr("transform",
+                        "translate(" + (width/2) + " ," + (height + margin.top + 20) + ")")
+                    .style("text-anchor", "middle")
+                    .style("font-weight", "bold")
+                    .style("font-size", "15px")
+                    .text("Year");
+
+
                 // Add the Y Axis
                 svg.append("g")
                     .attr("class", "axis")
                     .call(d3.axisLeft(y));
+
+                // Add text label for the y axis
+                svg.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 0 - margin.left + 20)
+                    .attr("x", 0 - (height/2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .style("font-weight", "bold")
+                    .style("font-size", "15px")
+                    .text("Avg. Attitude")
+
+                // Additional label for the y axis
+                // Progressive label to top of the y axis
+                svg.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 0 - margin.left + 50)
+                    .attr("x", 0 - (height/10))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+//                    .style("font-weight", "bold")
+                    .style("font-size", "15px")
+                    .text("progressive")
+
+                // Conservative label to bottom of the y axis
+                svg.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 0 - margin.left + 50)
+                    .attr("x", 0 - (9*height/10))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+//                    .style("font-weight", "bold")
+                    .style("font-size", "15px")
+                    .text("conservative")
+/*
+
+                // Add copyright and data source to bottom of the x Axis
+                svg.append("text")
+                    .attr("transform",
+                        "translate(" + (width - margin.right - 100) + " ," + (height + margin.top + 50) + ")")
+                    .style("text-anchor", "middle")
+                    .style("font-size", "15px")
+                    .style("font-family", "Times New Roman")
+                    .html("&copy; 2017 Wonjae Lee and Heungseok Park, KAIST")
+
+
+                // Add text label for the x axis
+                svg.append("text")
+                    .attr("transform",
+                        "translate(" + (0 + margin.left + 100) + " ," + (height + margin.top + 50) + ")")
+                    .style("text-anchor", "middle")
+                    .style("font-size", "15px")
+                    .style("font-family", "Times New Roman")
+                    .text("Data source: KGSS (Korean General Social Survey) 2013 - 2016");
+
+*/
+
 
 
             });
@@ -182,7 +270,8 @@
 
             function showValue(newValue){
 
-                var value = 19 + String(-1*Number(newValue));
+//                var value = 19 + String(-1*Number(newValue));
+                var value = 19 + newValue;
                 document.getElementById("range").innerHTML = value;
                 var active_index = 0;
                 for(var i=0; i<dataNest.length; i++){
@@ -201,7 +290,8 @@
             var index;
             function playInput() {
                 // -93 to -31
-                index = -93;
+                // now is from 31 to 93 (2017.05.16)
+                index = 31;
                 delayedLoop();
             }
             function delayedLoop()
@@ -211,7 +301,7 @@
                 $("#slider").change();
 
                 // (4) if the end of the array has been reached, stop
-                if(++index == -31)
+                if(++index == 93)
                     return;
 
                 // (5) recursively call the delayed loop function with a delay
@@ -234,33 +324,32 @@
             </div>
             <div class="modal-body">
                 <section>
-                    <h4>SongNav</h4>
-                    <p>This work represent public opinions from Korean Online Communities (KOC). The main visualization method is node-link diagram.
-                    </p>
-                    <p>Some other text ...</p>
+                    <h4>PoliticView</h4>
+                    <p>This work represent trends of political views by birth year in South Korea.</p>
+                    <br>
+
                 </section>
 
                 <section>
-                    <h4>How to use</h4>
-                    <p>As this network visualization is built in 3D, you can zoom in and out the camera with the mouse wheel. You can also rotate the network
-                        by dragging the mouse.
+                    <h4>Data Source</h4>
+                    <p> KGSS (Korean General Social Survey) from 2003 to 2016. The data was neither collected nor analyzed in 2015.
                     </p>
-                    <p>
+                    <br>
 
-                    </p>
-                    <p>Some other text ...</p>
+
                 </section>
 
                 <section>
                     <h4>Development</h4>
-                    <p>Powered by Three.js, and node.js</p>
+                    <p>Powered by d3.js</p>
+                    <br>
 
                 </section>
 
             </div>
             <div class="modal-footer">
                 <!--<h5>Modal Footer</h5>-->
-                <p>Developed and Designed by Heungseok Park . </p>
+                <p>Developed and Designed by Heungseok Park. </p>
                 <p>&copy; 2017 All rights reserved. </p>
             </div>
         </div>
