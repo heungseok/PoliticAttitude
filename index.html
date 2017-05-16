@@ -10,7 +10,7 @@
     <link rel="stylesheet" type="text/css" href="./style/style.css">
 
 
-    <title>PoliticAttitude</title>
+    <title>Trends of Political Views by Birth Year in South Korea 2003 - 2016</title>
 </head>
 
 <body>
@@ -21,7 +21,7 @@
     <nav class="navbar navbar-inverse navbar-fixed-top" style="position: absolute; left:0; top:0">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand" href="#">PoliticView<small> - Trends of political views by birth year in South Korea 2003 - 2016</small></a>
+                <a class="navbar-brand" href="#">Trends of political views by birth year in South Korea 2003 - 2016</a>
             </div>
 
 
@@ -65,7 +65,7 @@
         <div class="description">
             <span class="text data-source">Data source: KGSS (Korean General Social Survey) 2003 - 2016</span>
             <span class="text copyright">© 2017 Wonjae Lee and Heungseok Park, KAIST </span>
-            <span class="text data-source"><br>(The data was neither collected nor analyzed in 2015)</span>
+            <span class="text data-source"><br>(KGSS was not conducted in 2015)</span>
 
         </div>
 
@@ -87,10 +87,10 @@
             // Define the line
             var valueline = d3.line()
 //                .curve(d3.curveCatmullRomOpen) // curved option for line
-//                .curve(d3.curveBasis)
+                .curve(d3.curveBasis)
 //                .curve(d3.curveMonotoneX)
 //                .curve(d3.curveCatmullRom)
-                .curve(d3.curveCardinal)
+//                .curve(d3.curveCardinal)
                 .x(function(d) { return x(d.date); })
                 .y(function(d) { return y(d.values); });
 
@@ -110,6 +110,7 @@
 
             var len_category = 0;
             var dataNest;
+            var active_yob = 1931;
 
             // Get the data
             d3.csv("./data/politic_view_revised.csv", function(error, data) {
@@ -154,7 +155,13 @@
                             return d.color = color(Number(d.key));
                              })
                         .attr("id", 'tag'+d.key.replace(/\s+/g, '')) // assign an ID
-                        .attr("d", valueline(d.values));
+                        .attr("d", valueline(d.values))
+                        .style("opacity", function () {
+                            if(Number(d.key) == active_yob) return 1;
+                            else return 0.2;
+
+                        });
+
 
                     // Add the Legend by the right of the graph (그래프 오른쪽에 legend, mouseover event)
                     svg.append("text")
@@ -216,7 +223,7 @@
                     .style("text-anchor", "middle")
                     .style("font-weight", "bold")
                     .style("font-size", "15px")
-                    .text("Avg. Attitude")
+                    .text("Mean")
 
                 // Additional label for the y axis
                 // Progressive label to top of the y axis
@@ -228,7 +235,8 @@
                     .style("text-anchor", "middle")
 //                    .style("font-weight", "bold")
                     .style("font-size", "15px")
-                    .text("progressive")
+                    .text("conservative")
+
 
                 // Conservative label to bottom of the y axis
                 svg.append("text")
@@ -239,7 +247,7 @@
                     .style("text-anchor", "middle")
 //                    .style("font-weight", "bold")
                     .style("font-size", "15px")
-                    .text("conservative")
+                    .text("progressive")
 /*
 
                 // Add copyright and data source to bottom of the x Axis
@@ -324,7 +332,7 @@
             </div>
             <div class="modal-body">
                 <section>
-                    <h4>PoliticView</h4>
+                    <h4>PolView</h4>
                     <p>This work represent trends of political views by birth year in South Korea.</p>
                     <br>
 
@@ -332,7 +340,7 @@
 
                 <section>
                     <h4>Data Source</h4>
-                    <p> KGSS (Korean General Social Survey) from 2003 to 2016. The data was neither collected nor analyzed in 2015.
+                    <p> KGSS (Korean General Social Survey) from 2003 to 2016. KGSS was not conducted in 2015
                     </p>
                     <br>
 
